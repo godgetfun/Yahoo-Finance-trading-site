@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Nakshatra Maheshwari</title>
+		<link rel="shortcut icon" href="images/favico.png" type="image/ico" />
+		<link href="/css/css.css" rel="stylesheet" type="text/css">
+		<meta http-equiv="X-UA-Compatible" content="IE=Edge"> <!-- For intranet testing only, remove in production. -->
+		<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+		<script type="text/javascript">
+			window.addEventListener('load', slideShow, false);
+
+function slideShow() {
+  
+  /* GLOBALS **********************************************************************************************/
+  
+  var globals = {
+    slideDelay: 4000, // The time interval between consecutive slides.
+    fadeDelay: 35, // The time interval between individual opacity changes. This should always be much smaller than slideDelay.  
+    wrapperID: "slideShowImages", // The ID of the <div> element that contains all of the <img> elements to be shown as a slide show.
+    buttonID: "slideShowButton", // The ID of the <button> element that toggles the slide show on and off.
+    buttonStartText: "Start Slides", // Text used in the slide show toggle button.
+    buttonStopText: "Stop Slides", // Text used in the slide show toggle button.    
+    wrapperObject: null, // Will contain a reference to the <div> element that contains all of the <img> elements to be shown as a slide show.
+    buttonObject: null, // If present, will contain a reference to the <button> element that toggles the slide show on and off. The initial assumption is that there is no such button element (hence the false value).
+    slideImages: [], // Will contain all of the slide image objects.
+    slideShowID: null, // A setInterval() ID value used to stop the slide show.
+    slideShowRunning: true, // Used to record when the slide show is running and when it's not. The slide show is always initially running.    
+    slideIndex: 0 // The index of the current slide image.
+  }
+  
+  /* MAIN *************************************************************************************************/
+  
+  initializeGlobals();  
+  
+  if ( insufficientSlideShowMarkup() ) {
+    return; // Insufficient slide show markup - exit now.
+  }
+ 
+   // Assert: there's at least one slide image.
+ 
+  if (globals.slideImages.length == 1) {
+    return; // The solo slide image is already being displayed - exit now.
+  }
+  
+  // Assert: there's at least two slide images.
+  
+  initializeSlideShowMarkup();
+  
+  globals.wrapperObject.addEventListener('click', toggleSlideShow, false); // If the user clicks a slide show image, it toggles the slide show on and off.
+  
+  if (globals.buttonObject) {
+    globals.buttonObject.addEventListener('click', toggleSlideShow, false); // This callback is used to toggle the slide show on and off.
+  } 
+  
+  startSlideShow();
+  
+  /* FUNCTIONS ********************************************************************************************/
+  
+  function initializeGlobals() {   
+    globals.wrapperObject = (document.getElementById(globals.wrapperID) ? document.getElementById(globals.wrapperID) : null);
+    globals.buttonObject = (document.getElementById(globals.buttonID) ? document.getElementById(globals.buttonID) : null);   
+    
+    if (globals.wrapperObject) {
+      globals.slideImages = (globals.wrapperObject.querySelectorAll('img') ? globals.wrapperObject.querySelectorAll('img') : []);
+    }
+  } // initializeGlobals
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  function insufficientSlideShowMarkup() {
+    if (!globals.wrapperObject) { // There is no wrapper element whose ID is globals.wrapperID - fatal error.
+      if (globals.buttonObject) {
+        globals.buttonObject.style.display = "none"; // Hide the not needed slide show button element when present.
+      }
+      return true;
+    }
+
+    if (!globals.slideImages.length) { // There needs to be at least one slide <img> element - fatal error.
+      if (globals.wrapperObject) {
+        globals.wrapperObject.style.display = "none"; // Hide the not needed <div> wrapper element.
+      }
+    
+      if (globals.buttonObject) {
+        globals.buttonObject.style.display = "none"; // Hide the not needed slide show button element.
+      }
+    
+      return true;
+    }
+    
+    return false; // The markup expected by this library seems to be present.
+  } // insufficientSlideShowMarkup
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  function initializeSlideShowMarkup() {  
+    var slideWidthMax = maxSlideWidth(); // Returns a value that is always in pixel units.
+    var slideHeightMax = maxSlideHeight(); // Returns a value that is always in pixel units.
+    
+    globals.wrapperObject.style.position = "relative";
+    globals.wrapperObject.style.overflow = "hidden"; // This is just a safety thing.
+    globals.wrapperObject.style.width = slideWidthMax + "px";
+    globals.wrapperObject.style.height = slideHeightMax + "px";
+    
+    var slideCount = globals.slideImages.length;
+    for (var i = 0; i < slideCount; i++) { 
+      globals.slideImages[i].style.opacity = 0;
+      globals.slideImages[i].style.position = "absolute";
+      globals.slideImages[i].style.top = (slideHeightMax - globals.slideImages[i].getBoundingClientRect().height) / 2 + "px";   
+      globals.slideImages[i].style.left = (slideWidthMax - globals.slideImages[i].getBoundingClientRect().width) / 2 + "px";               
+    }
+    
+    globals.slideImages[0].style.opacity = 1; // Make the first slide visible.
+        
+    if (globals.buttonObject) {
+      globals.buttonObject.textContent = globals.buttonStopText;
+    }
+  } // initializeSlideShowMarkup
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    
+  function maxSlideWidth() {
+    var maxWidth = 0;
+    var maxSlideIndex = 0;
+    var slideCount = globals.slideImages.length;
+    
+    for (var i = 0; i < slideCount; i++) {
+      if (globals.slideImages[i].width > maxWidth) {
+        maxWidth = globals.slideImages[i].width; // The width of the widest slide so far.
+        maxSlideIndex = i; // The slide with the widest width so far.
+      }
+    }
+
+    return globals.slideImages[maxSlideIndex].getBoundingClientRect().width; // Account for the image's border, padding, and margin values. Note that getBoundingClientRect() is always in units of pixels.
+  } // maxSlideWidth
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    
+  function maxSlideHeight() {
+    var maxHeight = 0;
+    var maxSlideIndex = 0;    
+    var slideCount = globals.slideImages.length;
+    
+    for (var i = 0; i < slideCount; i++) {
+      if (globals.slideImages[i].height > maxHeight) {
+        maxHeight = globals.slideImages[i].height; // The height of the tallest slide so far.
+        maxSlideIndex = i; // The slide with the tallest height so far.
+      }
+    }
+    
+    return globals.slideImages[maxSlideIndex].getBoundingClientRect().height; // Account for the image's border, padding, and margin values. Note that getBoundingClientRect() is always in units of pixels.
+  } // maxSlideHeight
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  function startSlideShow() {
+    globals.slideShowID = setInterval(transitionSlides, globals.slideDelay);                
+  } // startSlideShow
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  function haltSlideShow() {
+    clearInterval(globals.slideShowID);   
+  } // haltSlideShow
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  function toggleSlideShow() {
+    if (globals.slideShowRunning) {
+      haltSlideShow();
+      if (globals.buttonObject) { 
+        globals.buttonObject.textContent = globals.buttonStartText; 
+      }
+    }
+    else {
+      startSlideShow();
+      if (globals.buttonObject) { 
+        globals.buttonObject.textContent = globals.buttonStopText; 
+      }            
+    }
+    globals.slideShowRunning = !(globals.slideShowRunning);
+  } // toggleSlideShow
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  function transitionSlides() {
+    var currentSlide = globals.slideImages[globals.slideIndex];
+    
+    ++(globals.slideIndex);
+    if (globals.slideIndex >= globals.slideImages.length) {
+      globals.slideIndex = 0;
+    }
+    
+    var nextSlide = globals.slideImages[globals.slideIndex];
+    
+    var currentSlideOpacity = 1; // Fade the current slide out.
+    var nextSlideOpacity = 0; // Fade the next slide in.
+    var opacityLevelIncrement = 1 / globals.fadeDelay;
+    var fadeActiveSlidesID = setInterval(fadeActiveSlides, globals.fadeDelay);
+    
+    function fadeActiveSlides() {
+      currentSlideOpacity -= opacityLevelIncrement;
+      nextSlideOpacity += opacityLevelIncrement;
+      
+      // console.log(currentSlideOpacity + nextSlideOpacity); // This should always be very close to 1.
+      
+      if (currentSlideOpacity >= 0 && nextSlideOpacity <= 1) {
+        currentSlide.style.opacity = currentSlideOpacity;
+        nextSlide.style.opacity = nextSlideOpacity; 
+      }
+      else {
+        currentSlide.style.opacity = 0;
+        nextSlide.style.opacity = 1; 
+        clearInterval(fadeActiveSlidesID);
+      }        
+    } // fadeActiveSlides
+  } // transitionSlides
+  
+} // slideShow
+		
+		</script>
+		<style type="text/css">
+		body {
+			margin: 1em 10%;
+			padding: 1em 3em;
+			font: 80%/1.4 tahoma, arial, helvetica, lucida sans, sans-serif;
+			border: 1px solid #999;
+			background: #eee;
+			position: relative;
+		}
+		* {
+			margin: 0;
+			padding: 0;
+		}
+		#head {
+			
+			background: url(index.php?img=gifLogo) 0 0 no-repeat;
+		}
+		marquee:hover {
+			color: #04569;
+			text-decoration: underline;
+		}
+		#pic {
+			position:fixed;
+			top:120px;
+			right:200px;
+		}
+		</style>
+	</head>
+	<body>
+	<div id="fb-root"></div>
+	<script>
+		(function(d, s, id) {
+			var js, fjs = d.getElementsByTagName(s)[0];
+			if (d.getElementById(id)) return;
+			js = d.createElement(s); js.id = id;
+			js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.0";
+			fjs.parentNode.insertBefore(js, fjs);
+		}(document, 'script', 'facebook-jssdk'));
+	</script>
+		<div id="head">
+			<center>
+			<div id="menu">
+				<ul>
+					<li><h2><a href="index.html">HOME</a></h2></li>
+					<li>
+						<h2><a href="#">About Me</a></h2>
+						<ul>
+							<li>
+								<a href="https://www.facebook.com/mn.maheshwari">Facebook</a>
+							</li>
+							<li>
+								<a href="http://in.linkedin.com/in/mn.maheshwari">LinkedIn</a>
+							</li>
+						</ul>
+					</li>
+					<li>
+						<h2><a href="contact">Contact Me</a></h2>
+						<ul>
+							<li>
+								<a href="#">Call : +91-7417591255</a>
+							</li>
+							<li>
+								<a href="#">Email : mn.maheshwari@gmail.com</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+			</center>
+			<br><br><br>
+			<br><br>
+				<h1> Nakshatra Maheshwari - Portfolio </h1> <br> <img src="RIT2012074.jpg" id="pic" width="200px" height="300px"/>
+				<h2> I am currently a student of IIIT Allahabad, studying in 6th Semester of Information Technology <br>Branch.</h2> <br> 
+				<h2> Network Coordinator @ IIITA-INDEM-Team </h2><br>
+				<h2> I recently also pursued CS50x Certification Course from Harvard University </h2><br>
+				<h2> I secured rank of 84 in ACM-ICPC Online Round and appeared for On-site round at Amritapuri</h2><br>
+				<h3> CGPA: 8.5 </h3><br>
+				<h3> </h3>
+				<h3> DOB: 11/11/1993 <h3>
+				<h3> Contact No: +91 - 7417531255 </h3>
+				<h3> E-Mail: mn.maheshwari@gmail.com</h3>
+				<center>
+					<h3>Some Moments</h3>
+					<div id="slideShowImages">
+						<img src="image1.jpg" alt="Slide 1" width="60%" height="300" />
+						<img src="image2.jpg" alt="Slide 2" width="60%" height="300"/>
+						<img src="image3.jpg" alt="Slide 3" width="20%" height="300"/>
+						<img src="image4.jpg" alt="Slide 4" width="80%" height="400"/>	
+					</div>  
+					<button id="slideShowButton"></button> <!-- Optional button element. -->
+					<script src="slideShow.js"></script>
+				</center>
+				<h3><a href="https://www.facebook.com/mn.maheshwari">Facebook</a></h3><br>
+				<div class="fb-follow" data-href="https://www.facebook.com/mn.maheshwari" data-colorscheme="dark" data-layout="standard" data-show-faces="true"></div>
+		</div>
+	</body>
+</html>
